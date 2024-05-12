@@ -7,10 +7,10 @@ class TestHtmlNode(unittest.TestCase):
         node1 = HTMLNode(props={"key1": "value1", "key2": "value2"})
         self.assertEqual(node1.props_to_html(), ' key1="value1" key2="value2"')
 
-class TestLeafNode(unittest.TestCase):
-    def test_to_html(self):
+    def test_to_html_leaf(self):
         node1 = LeafNode(tag = "t", value = "value", props = {"key1": "value1", "key2": "value2"})
         self.assertEqual(node1.to_html(), '<t key1="value1" key2="value2">value</t>')
+
 
 
 if __name__ == "__main__":
