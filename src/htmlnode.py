@@ -63,3 +63,18 @@ def text_node_to_html_node(text_node):
     raise Exception("Unsupported text type")
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    delimiter_dict = {'**': "bold", '*': "italic", "`": "code"}
+    if delimiter not in delimiter_dict:
+        raise KeyError('Unsupported Delimiter')
+    str_lst = []
+    for node in old_nodes:
+        str_lst.extend(node.value.split(delimiter))
+    if len(str_lst) % 2 == 0:
+        raise Exception("Invalid markdown syntax - missing closing delimiter")
+    node_lst = []
+    for i in range(len(str_lst)):
+        if i % 2 == 0:
+            node_lst.append(TextNode(value = str_lst[i], text_type = text_type))
+        else:
+            node_lst.append(TextNode(value = str_lst[i], text_type = delimiter_dict[delimiter]))
+    return node_lst
