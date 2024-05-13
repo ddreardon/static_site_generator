@@ -69,19 +69,15 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     delimiter_dict = {'**': "bold", '*': "italic", "`": "code"}
     if delimiter not in delimiter_dict:
         raise KeyError('Unsupported Delimiter')
-    str_lst = []
+    new_nodes = []
     for node in old_nodes:
-        str_lst.extend(node.value.split(delimiter))
-    if len(str_lst) % 2 == 0:
-        raise Exception("Invalid markdown syntax - missing closing delimiter")
-    node_lst = []
-    for i in range(len(str_lst)):
-        if i % 2 == 0:
-            node_lst.append(TextNode(value = str_lst[i], text_type = text_type))
-        else:
-            node_lst.append(TextNode(value = str_lst[i], text_type = delimiter_dict[delimiter]))
-    node_lst = [node for node in node_lst if node.value != '']
-    return node_lst
+        parts = node.value.split(delimiter)
+        for i, part in enumerate(parts):
+            if i % 2 == 0:
+                new_nodes.append(TextNode(value=part, text_type="text"))
+            else:
+                new_nodes.append(TextNode(value=part, text_type=delimiter_dict[delimiter]))
+    return [node for node in new_nodes if node.value]
 
 def extract_markdown_images(text):
     matches = re.findall(r"!\[(.*?)\]\((.*?)\)", text)
