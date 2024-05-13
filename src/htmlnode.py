@@ -65,19 +65,19 @@ def text_node_to_html_node(text_node):
         return LeafNode(value = "", tag = "img", props={"src": text_node.url, "alt": text_node.text})
     raise Exception("Unsupported text type")
 
-def split_nodes_delimiter(old_nodes, delimiter, text_type):
+def split_nodes_delimiter(old_nodes, delimiter):
     delimiter_dict = {'**': "bold", '*': "italic", "`": "code"}
     if delimiter not in delimiter_dict:
         raise KeyError('Unsupported Delimiter')
     new_nodes = []
     for node in old_nodes:
-        parts = node.value.split(delimiter)
+        parts = node.text.split(delimiter)
         for i, part in enumerate(parts):
             if i % 2 == 0:
-                new_nodes.append(TextNode(value=part, text_type="text"))
+                new_nodes.append(TextNode(text=part, text_type=node.text_type))
             else:
-                new_nodes.append(TextNode(value=part, text_type=delimiter_dict[delimiter]))
-    return [node for node in new_nodes if node.value]
+                new_nodes.append(TextNode(text=part, text_type=delimiter_dict[delimiter]))
+    return [node for node in new_nodes if node.text]
 
 def extract_markdown_images(text):
     matches = re.findall(r"!\[(.*?)\]\((.*?)\)", text)
@@ -90,8 +90,8 @@ def extract_markdown_links(text):
 def split_nodes_image(old_nodes):
     node_lst = []
     for node in old_nodes:
-        lst = [node.value]
-        image_tups = extract_markdown_images(lst)
+        lst = [node.text]
+        image_tups = extract_markdown_images(lst[0])
         if image_tups != []:
             for image_tup in image_tups:
                 cur_split = lst[-1].split(f"![{image_tup[0]}]({image_tup[1]})", 1)
@@ -100,16 +100,16 @@ def split_nodes_image(old_nodes):
                 lst.extend(cur_split)
         for element in lst:
             if type(element) == str and element != "":
-                node_lst.append(TextNode(value = element, text_type = "text"))
+                node_lst.append(TextNode(text = element, text_type = node.text_type))
             elif type(element) == tuple:
-                node_lst.append(TextNode(value = element[0], text_type = "image", url = element[1]))
+                node_lst.append(TextNode(text = element[0], text_type = "image", url = element[1]))
     return node_lst
 
 def split_nodes_link(old_nodes):
     node_lst = []
     for node in old_nodes:
-        lst = [node.value]
-        link_tups = extract_markdown_links(lst)
+        lst = [node.text]
+        link_tups = extract_markdown_links(lst[0])
         if link_tups != []:
             for link_tup in link_tups:
                 cur_split = lst[-1].split(f"[{link_tup[0]}]({link_tup[1]})", 1)
@@ -118,18 +118,19 @@ def split_nodes_link(old_nodes):
                 lst.extend(cur_split)
         for element in lst:
             if type(element) == str and element != "":
-                node_lst.append(TextNode(value = element, text_type = "text"))
+                node_lst.append(TextNode(text = element, text_type = node.text_type))
             elif type(element) == tuple:
-                node_lst.append(TextNode(value = element[0], text_type = "link", url = element[1]))
+                node_lst.append(TextNode(text = element[0], text_type = "link", url = element[1]))
     return node_lst
 
 def text_to_textnodes(text):
-    nodes = TextNode(value=text, text_type=text)
+    nodes = [TextNode(text=text, text_type="text")]
     nodes = split_nodes_image(nodes)
-    nodes = split_nodes_image(nodes)
-    nodes = split_nodes_delimiter(nodes, '**', "bold")
-    nodes = split_nodes_delimiter(nodes, '*', "italic")
-    nodes = split_nodes_delimiter(nodes, '`', "code")
+    nodes = split_nodes_link(nodes)
+    nodes = split_nodes_delimiter(nodes, '**')
+    nodes = split_nodes_delimiter(nodes, '*')
+    nodes = split_nodes_delimiter(nodes, '`')
+    return nodes
     
             
 
