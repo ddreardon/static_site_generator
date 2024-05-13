@@ -1,4 +1,5 @@
 import re
+from textnode import TextNode
 
 class HTMLNode():
     def __init__(self, tag=None, value=None, children=None, props={}):
@@ -59,7 +60,7 @@ def text_node_to_html_node(text_node):
     if text_node.text_type == "code":
         return LeafNode(value = text_node.text, tag = "code")
     if text_node.text_type == "link":
-        return LeafNode(value = text_node.text, tag = "a", prop = {"href" : text_node.url})
+        return LeafNode(value = text_node.text, tag = "a", props = {"href" : text_node.url})
     if text_node.text_type == "image":
         return LeafNode(value = "", tag = "img", props={"src": text_node.url, "alt": text_node.text})
     raise Exception("Unsupported text type")
@@ -79,6 +80,7 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             node_lst.append(TextNode(value = str_lst[i], text_type = text_type))
         else:
             node_lst.append(TextNode(value = str_lst[i], text_type = delimiter_dict[delimiter]))
+    node_lst = [node for node in node_lst if node.value != '']
     return node_lst
 
 def extract_markdown_images(text):
@@ -88,3 +90,47 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     matches = re.findall(r"\[(.*?)\]\((.*?)\)", text)
     return matches
+
+def split_nodes_image(old_nodes):
+    node_lst = []
+    for node in old_nodes:
+        lst = [node.value]
+        image_tups = extract_markdown_images(lst)
+        if image_tups != []:
+            for image_tup in image_tups:
+                cur_split = lst[-1].split(f"![{image_tup[0]}]({image_tup[1]})", 1)
+                cur_split.insert(1, image_tup)
+                lst = lst[:-1]
+                lst.extend(cur_split)
+        for element in lst:
+            if type(element) == str and element != "":
+                node_lst.append(TextNode(value = element, text_type = "text"))
+            elif type(element) == tuple:
+                node_lst.append(TextNode(value = element[0], text_type = "image", url = element[1]))
+    return node_lst
+
+def split_nodes_link(old_nodes):
+    node_lst = []
+    for node in old_nodes:
+        lst = [node.value]
+        link_tups = extract_markdown_links(lst)
+        if link_tups != []:
+            for link_tup in link_tups:
+                cur_split = lst[-1].split(f"[{link_tup[0]}]({link_tup[1]})", 1)
+                cur_split.insert(1, link_tup)
+                lst = lst[:-1]
+                lst.extend(cur_split)
+        for element in lst:
+            if type(element) == str and element != "":
+                node_lst.append(TextNode(value = element, text_type = "text"))
+            elif type(element) == tuple:
+                node_lst.append(TextNode(value = element[0], text_type = "link", url = element[1]))
+    return node_lst
+
+def text_to_textnodes(text):
+    
+            
+
+        
+
+        
