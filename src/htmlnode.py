@@ -131,8 +131,103 @@ def text_to_textnodes(text):
     nodes = split_nodes_delimiter(nodes, '*')
     nodes = split_nodes_delimiter(nodes, '`')
     return nodes
+
+#function takes a raw Markdown string and returns a list of "block" strings
+#Split the input string into distinct blocks and strip any leading or trailing whitespace from each block, as well as remove
+#any "empty blocks" due to unneccesary newlines
+def markdown_to_blocks(markdown):
+    blocks = markdown.split('\n\n')
+    blocks = [block.strip() for block in blocks if block.strip() != ""]
+    return blocks
+
+#function takes a single block of markdown text and returns the type of block it is
+#headings start with 1-6 '#', a space, then heading text
+#code blocks must start and end with 3 ```
+#every line in a quote block must start with a > 
+#every line in an unordered list must start with either a * or a -, followed by a space
+#every line in an ordered list must start with a number, followed by a . and a space. 
+#That number must start at one and increment by one each line
+#otherwise, its a normal paragraph
+def block_to_block_type(block):
+    for i in range(7):
+        if block[:i] == '#' and block[i] == ' ':
+            return 'heading'
+    if block[:3] == '```' and block[-3:] == '```':
+        return 'code'
+    line_split = block.split('\n')
+    if all([line[0] == '>' for line in line_split]):
+        return 'quote'
+    if all(line[:2] == '* ' or line[:2] == '- ' for line in line_split):
+        return 'unordered-list'
+    if all(line.split('.', 1)[0][0] == str(i) and line.split('.', 1)[1][0] == ' ' for i, line in enumerate(line_split, 1)):
+        return 'ordered-list'
+    return 'paragraph'
     
-            
+#function for converting a blockquote to an htmlnode
+def quote_to_html_node(block):
+    text_nodes = text_to_textnodes(block)
+    children = [text_node_to_html_node(node) for node in text_nodes]
+    return ParentNode(tag='blockquote', children=children)
+
+#function for converting an unordered list to an htmlnode
+def unordered_list_to_html_node(block):
+    lines = block.split('\n')
+    children = []
+    for line in lines:
+        text_nodes = text_to_textnodes(line[2:])
+        children.append(ParentNode(tag='li', children=[text_node_to_html_node(node) for node in text_nodes]))
+    return ParentNode(tag='ul', children=children)
+
+#function for converting an ordered list to an htmlnode
+def ordered_list_to_html_node(block):
+    lines = block.split('\n')
+    children = []
+    for line in lines:
+        text_nodes = text_to_textnodes(line.split('.', 1)[1])
+        children.append(ParentNode(tag='li', children=[text_node_to_html_node(node) for node in text_nodes]))
+    return ParentNode(tag='ol', children=children)
+
+#function for converting a paragraph to an htmlnode
+def paragraph_to_html_node(block):
+    text_nodes = text_to_textnodes(block)
+    children = [text_node_to_html_node(node) for node in text_nodes]
+    return ParentNode(tag='p', children=children)
+
+#function for converting a heading to an htmlnode
+def heading_to_html_node(block):
+    level = 0
+    for i in range(7):
+        if block[i] == '#':
+            level += 1
+        else:
+            break
+    text_nodes = text_to_textnodes(block[level+1:])
+    children = [text_node_to_html_node(node) for node in text_nodes]
+    return ParentNode(tag=f'h{level}', children=children)
+
+#function for converting a code block to an htmlnode
+def code_to_html_node(block):
+    return ParentNode(tag = "pre", children=LeafNode(value=block[3:-3], tag='code'))
+
+#overarching master function, takes a full markdown document, creates a "div" with document's blocks as children
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    children = []
+    for block in blocks:
+        if block_to_block_type(block) == 'heading':
+            children.append(heading_to_html_node(block))
+        if block_to_block_type(block) == 'quote':
+            children.append(quote_to_html_node(block))
+        if block_to_block_type(block) == 'code':
+            children.append(code_to_html_node(block))
+        if block_to_block_type(block) == 'ordered-list':
+            children.append(ordered_list_to_html_node(block))
+        if block_to_block_type(block) == 'unordered-list':
+            children.append(unordered_list_to_html_node(block))
+        if block_to_block_type(block) == 'paragraph':
+            children.append(paragraph_to_html_node(block))
+    return ParentNode(tag='div', children=children)
+
 
         
 
