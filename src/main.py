@@ -16,12 +16,13 @@ def copy_process(src, dest):
 def copy_directory(src, dest):
     if os.path.exists(dest):
         shutil.rmtree(dest)
+        os.makedirs(dest)
         copy_process(src, dest)
     else:
         raise ValueError('Destination directory does not exist')
 
 def main():
-    copy_directory('src/static', 'public')
+    copy_directory('./static', '../public')
     
 
 main()
