@@ -2,7 +2,7 @@ import re
 from textnode import TextNode
 
 class HTMLNode():
-    def __init__(self, tag=None, value=None, children=None, props={}):
+    def __init__(self, tag=None, value=None, children=[], props={}):
         self.tag = tag
         self.value = value
         self.children = children
@@ -24,7 +24,7 @@ class LeafNode(HTMLNode):
     def __init__(self, value, tag=None, props=None):
         if props is None:
             props = {}
-        super().__init__(tag=tag, value=value, children=None, props=props)
+        super().__init__(tag=tag, value=value, children=[], props=props)
         if self.value == None:
             raise ValueError('Leaf Nodes require a Value')
 
@@ -41,13 +41,14 @@ class ParentNode(HTMLNode):
         super().__init__(tag=tag, value=None, children=children, props=props)
         if self.tag == None:
             raise ValueError('Parent Nodes require a tag')
-        if self.children == None or self.children == []:
+        if self.children == []:
             raise ValueError('Parent Nodes require at least one child')
         
     def to_html(self):
         string = ""
         for node in self.children:
-            string += node.to_html()
+            if isinstance(node, HTMLNode):
+                string += node.to_html()
         return f"<{self.tag}{self.props_to_html()}>{string}</{self.tag}>"
             
 def text_node_to_html_node(text_node):
@@ -183,7 +184,7 @@ def ordered_list_to_html_node(block):
     lines = block.split('\n')
     children = []
     for line in lines:
-        text_nodes = text_to_textnodes(line.split('.', 1)[1])
+        text_nodes = text_to_textnodes(line.split('. ', 1)[1])
         children.append(ParentNode(tag='li', children=[text_node_to_html_node(node) for node in text_nodes]))
     return ParentNode(tag='ol', children=children)
 
@@ -207,7 +208,7 @@ def heading_to_html_node(block):
 
 #function for converting a code block to an htmlnode
 def code_to_html_node(block):
-    return ParentNode(tag = "pre", children=LeafNode(value=block[3:-3], tag='code'))
+    return ParentNode(tag = "pre", children=[LeafNode(value=block[3:-3], tag='code')])
 
 #overarching master function, takes a full markdown document, creates a "div" with document's blocks as children
 def markdown_to_html_node(markdown):

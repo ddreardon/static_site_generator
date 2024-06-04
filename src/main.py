@@ -47,14 +47,15 @@ def generate_page(from_path, template_path, dest_path):
         template = file.read()
     html_content = markdown_to_html_node(content).to_html()
     title = extract_title(content)
-    template = template.replace('{{title}}', title).replace('{{content}}', html_content)
+    template = template.replace('{{ Title }}', title).replace('{{ Content }}', html_content)
     with open(dest_path, 'w') as file:
         file.write(template)
     
     
 
 def main():
-    copy_directory('./static', '../public')
+    copy_directory('./src/static', './public')
+    generate_page('./content/index.md', './template.html', './public/index.html')
     
 
 main()
