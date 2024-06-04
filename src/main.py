@@ -40,7 +40,7 @@ def generate_page(from_path, template_path, dest_path):
 #replaces the title and content placeholders in the template with the title and html content
 #writes the new html file at dest_path, creating any new directories if necessary
 
-    print(f'Generating page {from_path}')
+    print(f'Generating page {from_path} to {dest_path} using {template_path}')
     with open(from_path, 'r') as file:
         content = file.read()
     with open(template_path, 'r') as file:
